@@ -2,12 +2,16 @@
 Utility helpers for common PowerPoint edits using python-pptx.
 These wrap risky/verbose operations into safe, tested functions to reduce model hallucinations.
 """
+from typing import List, Tuple, Optional, Any, Union
+
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_CONNECTOR, MSO_SHAPE_TYPE
 from pptx.oxml.xmlchemy import OxmlElement
+from pptx.shapes.base import BaseShape
+from pptx.slide import Slide
 
 
 # -------- Basic getters --------
@@ -16,7 +20,7 @@ def load_presentation(ppt_path: str) -> Presentation:
     return Presentation(ppt_path)
 
 
-def get_slide(prs: Presentation, index: int):
+def get_slide(prs: Presentation, index: int) -> Slide:
     """Safe slide access with 0-based index."""
     if index < 0 or index >= len(prs.slides):
         raise IndexError(f"Slide index {index} out of range; total slides: {len(prs.slides)}")
@@ -24,7 +28,7 @@ def get_slide(prs: Presentation, index: int):
 
 
 # -------- Shape utilities --------
-def delete_shapes_except(slide, shapes_to_keep):
+def delete_shapes_except(slide: Slide, shapes_to_keep: List[Optional[BaseShape]]) -> None:
     """Delete all shapes except those in shapes_to_keep."""
     keep_elements = {s.element for s in shapes_to_keep if s is not None}
     for shape in list(slide.shapes):
@@ -34,7 +38,7 @@ def delete_shapes_except(slide, shapes_to_keep):
         sp.getparent().remove(sp)
 
 
-def remove_connectors_and_lines(slide):
+def remove_connectors_and_lines(slide: Slide) -> None:
     """Remove existing connector/line shapes."""
     connector_type = getattr(MSO_SHAPE_TYPE, "CONNECTOR", None)
     for shape in list(slide.shapes):
@@ -44,18 +48,18 @@ def remove_connectors_and_lines(slide):
 
 
 def add_rounded_textbox(
-    slide,
+    slide: Slide,
     text: str,
-    left,
-    top,
-    width,
-    height,
-    fill_rgb=(232, 244, 248),
-    text_rgb=(50, 50, 50),
-    font_size=20,
-    align=PP_ALIGN.CENTER,
-    vertical_anchor=MSO_ANCHOR.MIDDLE,
-):
+    left: Union[int, Emu],
+    top: Union[int, Emu],
+    width: Union[int, Emu],
+    height: Union[int, Emu],
+    fill_rgb: Tuple[int, int, int] = (232, 244, 248),
+    text_rgb: Tuple[int, int, int] = (50, 50, 50),
+    font_size: int = 20,
+    align: Any = PP_ALIGN.CENTER,
+    vertical_anchor: Any = MSO_ANCHOR.MIDDLE,
+) -> BaseShape:
     """Add a rounded rectangle with text and return the shape."""
     shape = slide.shapes.add_shape(MSO_AUTO_SHAPE_TYPE.ROUNDED_RECTANGLE, left, top, width, height)
 
@@ -95,7 +99,14 @@ def add_rounded_textbox(
     return shape
 
 
-def add_arrow_between(slide, shape_from, shape_to, color_rgb=(70, 70, 70), width_pt=2.5, arrow_head=2):
+def add_arrow_between(
+    slide: Slide,
+    shape_from: BaseShape,
+    shape_to: BaseShape,
+    color_rgb: Tuple[int, int, int] = (70, 70, 70),
+    width_pt: float = 2.5,
+    arrow_head: int = 2,
+) -> BaseShape:
     """Add straight connector arrow between two shapes and return the connector."""
     start_x = Emu(shape_from.left + shape_from.width)
     start_y = Emu(shape_from.top + shape_from.height // 2)
@@ -115,7 +126,13 @@ def add_arrow_between(slide, shape_from, shape_to, color_rgb=(70, 70, 70), width
 
 
 # -------- Layout helpers --------
-def distribute_horizontally(slide_width, count, box_width, gap, margin=Inches(0.5)):
+def distribute_horizontally(
+    slide_width: Union[int, Emu],
+    count: int,
+    box_width: Union[int, Emu],
+    gap: Union[int, Emu],
+    margin: Union[int, Emu] = Inches(0.5),
+) -> List[int]:
     """
     Compute left positions to distribute `count` boxes horizontally.
     Returns list of left positions (Emu).

@@ -1,6 +1,6 @@
 import os
 from pptx import Presentation
-from pptx.enum.shapes import MSO_SHAPE_TYPE
+
 
 class PPTInspector:
     def __init__(self, converter):
@@ -28,32 +28,33 @@ class PPTInspector:
         summary = []
         summary.append(f"Presentation: {os.path.basename(ppt_path)}")
         summary.append(f"Total Slides: {len(prs.slides)}")
-        
+
         for i, slide in enumerate(prs.slides):
             slide_info = [f"\n--- Slide {i+1} ---"]
-            
+
             # Layout
             slide_info.append(f"Layout: {slide.slide_layout.name}")
-            
+
             # Title
             if slide.shapes.title and slide.shapes.title.text:
                 slide_info.append(f"Title: '{slide.shapes.title.text}'")
-            
+
             # Elements
             elements = []
             for shape in slide.shapes:
                 # Skip title as it's already handled
                 if shape == slide.shapes.title:
                     continue
-                
+
                 shape_desc = f"- Type: {shape.shape_type}"
-                
+
                 # Text content
                 if shape.has_text_frame and shape.text.strip():
                     text = shape.text.replace('\n', ' ')
-                    if len(text) > 50: text = text[:50] + "..."
+                    if len(text) > 50:
+                        text = text[:50] + "..."
                     shape_desc += f", Text: '{text}'"
-                
+
                 # Geometry
                 try:
                     left_pt = int(float(shape.left.pt))
@@ -63,7 +64,7 @@ class PPTInspector:
                     shape_desc += f", Pos: ({left_pt}, {top_pt}), Size: {width_pt}x{height_pt}"
                 except Exception:
                     shape_desc += ", Pos/Size: (unreadable)"
-                
+
                 # Color (Simplified) - 安全地讀取顏色
                 try:
                     if hasattr(shape, 'fill'):
@@ -77,13 +78,13 @@ class PPTInspector:
                     pass
 
                 elements.append(shape_desc)
-            
+
             if elements:
                 slide_info.append("Elements:")
                 slide_info.extend(elements)
             else:
                 slide_info.append("Elements: (None)")
-                
+
             summary.append("\n".join(slide_info))
-            
+
         return "\n".join(summary)

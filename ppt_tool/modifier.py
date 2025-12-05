@@ -1,7 +1,7 @@
 import os
 import re
+import traceback
 import google.generativeai as genai
-from pptx import Presentation
 from pathlib import Path
 from ppt_tool.converter import PPTConverter
 
@@ -10,19 +10,20 @@ from ppt_tool.converter import PPTConverter
 if "GOOGLE_API_KEY" not in os.environ:
     print("[WARN] Warning: GOOGLE_API_KEY not found in environment variables.")
 
+
 class PPTModifier:
     def __init__(self):
         try:
             genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-            
+
             # 從環境變數讀取模型設定，若無則使用預設值
             self.text_model_name = os.environ.get("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
             self.vision_model_name = os.environ.get("GEMINI_VISION_MODEL", "gemini-2.5-flash")
-            
+
             # 初始化兩個模型
             self.text_model = genai.GenerativeModel(self.text_model_name)
             self.vision_model = genai.GenerativeModel(self.vision_model_name)
-            
+
             print(f"[INFO] Text model: {self.text_model_name}")
             print(f"[INFO] Vision model: {self.vision_model_name}")
         except Exception as e:
@@ -55,7 +56,7 @@ class PPTModifier:
             model = self.text_model
             model_name = self.text_model_name
             print(f"[INFO] Using text model ({model_name})...")
-        
+
         print("[INFO] Building prompt for Gemini...")
         # 準備 Prompt
         prompt_parts = [
@@ -226,7 +227,7 @@ class PPTModifier:
             print("[INFO] Calling Gemini model...")
             response = model.generate_content(prompt_parts)
             code = self._extract_code(response.text)
-            
+
             print("[INFO] Executing generated code...")
             if debug:
                 print("\n[DEBUG] Generated code:\n" + "="*60)
@@ -244,21 +245,24 @@ class PPTModifier:
             ]
             if not any(marker in code for marker in helper_markers):
                 return False, "Generated code did not use required helper APIs; please retry."
-            
+
             # 檢查檔案是否被鎖定（例如在 PowerPoint 中開啟）
             if self._is_file_locked(ppt_path):
                 print("[WARN] PowerPoint file is currently open in another application.")
                 print("[WARN] Please close PowerPoint and press Enter to continue...")
                 input()
-            
+
             # print(code) # Debug use
-            
+
             # 執行程式碼
+            # Security Note: This exec() call runs AI-generated code with limited globals.
+            # While globals are restricted to pptx-related modules, this still poses inherent
+            # security risks. Only use this tool with trusted inputs and in controlled environments.
             # 為了安全，限制 globals，但允許 pptx 相關庫
             exec(code, exec_globals)
-            
+
             return True, "Modification applied successfully."
-            
+
         except Exception as e:
             # 輸出生成的程式碼供除錯
             print("\n[DEBUG] Generated code that caused error:")
@@ -266,10 +270,9 @@ class PPTModifier:
             print(code)
             print("=" * 60)
             print("\n[DEBUG] Full traceback:")
-            import traceback
             traceback.print_exc()
             return False, f"Error: {e}"
-        
+
     def validate_with_vision(self, user_instruction: str, ppt_path: str):
         """
         使用視覺模型檢查修改後的簡報是否符合指令。
@@ -277,13 +280,13 @@ class PPTModifier:
         """
         if not self.vision_model:
             return False, "Vision model not initialized."
-        
+
         print("[INFO] Validating result with vision model...")
         converter = PPTConverter()
         pdf_path = converter.convert_to_pdf(ppt_path, output_dir="./temp_visuals")
         if not pdf_path or not os.path.exists(pdf_path):
             return False, "Validation skipped: PDF conversion failed."
-        
+
         try:
             print(f"[INFO] Uploading updated PDF for validation: {pdf_path}")
             pdf_file = genai.upload_file(pdf_path)
@@ -307,12 +310,11 @@ class PPTModifier:
 
     def _is_file_locked(self, filepath):
         """檢查檔案是否被其他程式鎖定"""
-        import os
         if not os.path.exists(filepath):
             return False
         try:
             # 嘗試以獨占模式開啟檔案
-            with open(filepath, 'r+b') as f:
+            with open(filepath, 'r+b'):
                 pass
             return False
         except (IOError, PermissionError):
