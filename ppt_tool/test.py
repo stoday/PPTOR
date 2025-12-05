@@ -1,15 +1,13 @@
-from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
-from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE, MSO_CONNECTOR, MSO_SHAPE_TYPE
-from pptx.enum.text import MSO_ANCHOR
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.enum.shapes import MSO_SHAPE_TYPE
 from ppt_tool.ppt_api import (
-    load_presentation, get_slide, delete_shapes_except, remove_connectors_and_lines,
-    add_rounded_textbox, add_arrow_between, distribute_horizontally
+    load_presentation, get_slide, add_rounded_textbox
 )
 
 # Target PowerPoint file path
+# NOTE: Update this path to your local presentation file
 ppt_path = r'C:\Users\today\Dropbox\MainStorage\P2025_PPTOR\presentation.pptx'
 
 # Load the presentation
@@ -23,12 +21,9 @@ slide = get_slide(prs, slide_index)
 
 # Define the detailed descriptions for each step
 detailed_texts = [
-    "乾性材料如麵粉、糖、泡打粉等，需要先用篩網過篩，確保沒有結塊，使蛋糕口感更細膩。混合時確保所有粉末均勻分佈，避免在烘烤時出現生粉團 
-。",
-    "濕性材料包括雞蛋、牛奶、植物油或融化的奶油、香草精等。先將雞蛋打散，再陸續加入牛奶、油和香草精，攪拌至乳化狀態。這些液體要充分混合 
-，才能更好地與乾性材料結合。",
-    "將濕性材料分三次左右加入乾性材料中，每次加入後用刮刀以「切拌」或「翻拌」的方式輕柔混合，直到沒有明顯的乾粉即可。避免過度攪拌，以免 
-麵粉產生筋性，影響蛋糕的鬆軟度。輕柔攪拌是蛋糕成功的關鍵。"
+    "乾性材料如麵粉、糖、泡打粉等，需要先用篩網過篩，確保沒有結塊，使蛋糕口感更細膩。混合時確保所有粉末均勻分佈，避免在烘烤時出現生粉團。",
+    "濕性材料包括雞蛋、牛奶、植物油或融化的奶油、香草精等。先將雞蛋打散，再陸續加入牛奶、油和香草精，攪拌至乳化狀態。這些液體要充分混合，才能更好地與乾性材料結合。",
+    "將濕性材料分三次左右加入乾性材料中，每次加入後用刮刀以「切拌」或「翻拌」的方式輕柔混合，直到沒有明顯的乾粉即可。避免過度攪拌，以免麵粉產生筋性，影響蛋糕的鬆軟度。輕柔攪拌是蛋糕成功的關鍵。"
 ]
 
 # Find existing flowchart shapes to determine positioning for new description boxes
@@ -68,15 +63,15 @@ for i, box_text in enumerate(detailed_texts):
 
         # Apply specific text formatting as per critical requirements
         text_frame = new_description_box.text_frame
-        text_frame.word_wrap = True          # Enable word wrap for detailed text
-        text_frame.vertical_anchor = MSO_ANCHOR.TOP # Align text to the top of the textbox
+        text_frame.word_wrap = True  # Enable word wrap for detailed text
+        text_frame.vertical_anchor = MSO_ANCHOR.TOP  # Align text to the top
 
         # Assuming the add_rounded_textbox helper places all text in the first paragraph
         p = text_frame.paragraphs[0]
-        p.alignment = PP_ALIGN.LEFT         # Left align for detailed text
+        p.alignment = PP_ALIGN.LEFT  # Left align for detailed text
         p.font.name = 'Microsoft JhengHei'  # Set Chinese font
-        p.font.size = Pt(font_size_pt)      # Set font size
-        p.font.color.rgb = RGBColor(*text_color_rgb) # Set text color
+        p.font.size = Pt(font_size_pt)  # Set font size
+        p.font.color.rgb = RGBColor(*text_color_rgb)  # Set text color
 
         # Add subtle shadow for depth, as per critical requirements
         if hasattr(new_description_box, 'shadow') and new_description_box.shadow is not None:
@@ -88,3 +83,6 @@ for i, box_text in enumerate(detailed_texts):
             shadow.angle = 45
             shadow.blur_radius = Pt(4)
             shadow.transparency = 0.5
+
+# Save the modified presentation
+prs.save(ppt_path)

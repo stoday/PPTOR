@@ -48,23 +48,23 @@ def main():
     if not env_path.exists():
         print(f"[WARN] .env not found at {env_path}. Continuing without overrides.")
     load_dotenv(dotenv_path=env_path)
-    
+
     print("[INFO] PPT Secretary (Gemini Powered) Started")
     print("-----------------------------------------")
     if debug_mode:
         print("[INFO] Debug mode ON: Generated code will be printed before execution.")
-    
+
     # 初始化模組
     converter = PPTConverter()
     inspector = PPTInspector(converter)
     modifier = PPTModifier()
-    
+
     # 預設檔案名稱
     ppt_path = Path(args.ppt).expanduser()
     if not ppt_path.is_absolute():
         ppt_path = (Path.cwd() / ppt_path).resolve()
     current_ppt = str(ppt_path)
-    
+
     print(f"[INFO] Target File: {current_ppt}")
     if not ppt_path.exists():
         print("[WARN] File does not exist. It will be created upon first instruction.")
@@ -74,14 +74,14 @@ def main():
             user_input = input("\n[USER]: ").strip()
         except EOFError:
             break
-            
+
         if not user_input:
             continue
-            
+
         if user_input.lower() in ['exit', 'quit']:
             print("Bye! [EXIT]")
             break
-        
+
         # 1. 如果檔案不存在，且指令是建立，則先建立空檔案
         if not ppt_path.exists():
             from pptx import Presentation
@@ -94,16 +94,16 @@ def main():
         print("[INFO] Inspecting presentation...")
         text_summary, pdf_path = inspector.inspect(current_ppt)
         print("[INFO] Inspection finished.")
-        
+
         # 3. Modifier (大腦 + 手)
         success, message = modifier.generate_and_execute(
-            user_input, 
-            text_summary, 
-            pdf_path, 
+            user_input,
+            text_summary,
+            pdf_path,
             current_ppt,
             debug=debug_mode
         )
-        
+
         if success:
             print(f"[SUCCESS] {message}")
             # 進行視覺驗證
@@ -125,6 +125,7 @@ def main():
                 print(f"[INFO] Please manually open: {current_ppt}")
         else:
             print(f"[ERROR] {message}")
+
 
 if __name__ == "__main__":
     main()

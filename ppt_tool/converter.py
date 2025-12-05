@@ -1,8 +1,8 @@
 import os
 import sys
 import subprocess
-import platform
 from pathlib import Path
+
 
 class PPTConverter:
     def __init__(self):
@@ -37,14 +37,14 @@ class PPTConverter:
                 return "libreoffice"
             except (FileNotFoundError, subprocess.CalledProcessError):
                 continue
-        
+
         return "none"
 
     def convert_to_pdf(self, ppt_path: str, output_dir: str) -> str:
         """將 PPT 轉換為 PDF，回傳 PDF 路徑"""
         ppt_path = str(Path(ppt_path).resolve())
         output_dir = str(Path(output_dir).resolve())
-        
+
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -66,13 +66,13 @@ class PPTConverter:
         try:
             ppt_app = win32com.client.Dispatch("PowerPoint.Application")
             pres = ppt_app.Presentations.Open(ppt_path, WithWindow=False)
-            
+
             # 檢查是否有投影片，空簡報無法轉 PDF
             if pres.Slides.Count == 0:
                 print("[WARN] Presentation has no slides, skipping PDF conversion.")
                 return None
-            
-            pres.SaveAs(pdf_path, 32) # 32 = ppSaveAsPDF
+
+            pres.SaveAs(pdf_path, 32)  # 32 = ppSaveAsPDF
             return pdf_path
         except Exception as e:
             print(f"[ERROR] COM Conversion Error: {e}")
@@ -81,7 +81,7 @@ class PPTConverter:
             if pres:
                 pres.Close()
             # 不關閉 Application，以免影響使用者正在開啟的其他 PPT
-            # if ppt_app: ppt_app.Quit() 
+            # if ppt_app: ppt_app.Quit()
 
     def _convert_with_libreoffice(self, ppt_path, output_dir):
         try:
@@ -94,7 +94,7 @@ class PPTConverter:
                 "--outdir", output_dir
             ]
             subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            
+
             filename = Path(ppt_path).stem
             expected_pdf = os.path.join(output_dir, f"{filename}.pdf")
             if os.path.exists(expected_pdf):
