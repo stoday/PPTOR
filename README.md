@@ -18,7 +18,7 @@
    GEMINI_VISION_MODEL=gemini-2.5-flash
    ```
    `main.py` 會自動載入並套用設定；若未設置金鑰將無法使用模型。
-5. **預設目標檔**：根目錄下的 `presentation.pptx`。若檔案不存在，系統會在首次指令時建立空白簡報。
+5. **預設目標檔**：根目錄下的 `presentation.pptx`。可透過 `--ppt`/`-p` 指定其他路徑；若檔案不存在，系統會在首次指令時建立空白簡報。
 
 ## 安裝與操作步驟
 1. 取得程式碼並進入專案目錄：
@@ -43,8 +43,10 @@
    ```bash
    python -m ppt_tool.main          # 一般模式
    python -m ppt_tool.main -d       # Debug 模式，會印出 Gemini 產生的程式碼
+   python -m ppt_tool.main -p demo/new_slide.pptx  # 指定或建立特定簡報
    ```
-6. 依 CLI 提示輸入自然語言指令。成功修改後程式會嘗試開啟 `presentation.pptx` 供檢視，並輸出視覺驗證回饋。
+   使用 `-p/--ppt` 可變更目標檔案路徑；若檔案不存在會自動建立空白簡報，並確保父層資料夾也會產生。
+6. 依 CLI 提示輸入自然語言指令。成功修改後程式會嘗試開啟目標簡報（預設 `presentation.pptx`）供檢視，並輸出視覺驗證回饋。
 
 ## 專案結構與簡述
 ```
@@ -61,16 +63,15 @@ P2025_PPTOR/
 │   ├── test_ppt_api.py  # 針對 helper API 的 pytest 測試
 │   └── artifacts/       # 測試輸出樣本
 ├── temp_visuals/        # PDF 轉檔輸出，供視覺模型參考與驗證
-├── presentation.pptx    # 預設操作目標
+├── presentation.pptx    # 預設操作目標（可用 -p/--ppt 更換）
 └── .env                 # 存放 Gemini 金鑰與模型設定
 ```
 
 ## 開發者注意事項
 - **API Key 安全**：`GOOGLE_API_KEY` 僅放在 `.env`，勿提交到版本控制。
-- **PowerPoint Lock**：若使用者開啟 `presentation.pptx`，系統會偵測 `~$` lock 檔並提示先關閉。
+- **PowerPoint Lock**：若使用者開啟目標簡報（預設 `presentation.pptx`），系統會偵測 `~$` lock 檔並提示先關閉。
 - **PDF 轉檔引擎**：`converter.py` 依序嘗試 COM → LibreOffice → 無法轉檔；缺少引擎將無法進行視覺驗證。
 - **Debug 模式**：啟用 `-d/--debug` 以檢視 Gemini 產生的 Python 程式，方便排查失敗原因。
 - **測試**：執行 `pytest` 會在 `tests/artifacts` 產出樣本檔案，必要時可清理；CI 流程請記得忽略該資料夾。
 - **暫存檔案**：`temp_visuals/` 會累積 PDF，若想清空可安全刪除資料夾，程式會於下次需要時重新建立。
 - **依賴更新**：若新增 helper 或外部套件，請同步更新 `ppt_tool/requirements.txt` 與 README，並為新功能補上測試。
-
