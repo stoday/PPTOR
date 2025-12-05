@@ -25,6 +25,12 @@ def _parse_args():
         default="presentation.pptx",
         help="Target PPTX file path. If missing, it will be created automatically.",
     )
+    parser.add_argument(
+        "-e",
+        "--env",
+        default=None,
+        help="Path to a .env file or directory that contains it. Defaults to current working directory.",
+    )
     return parser.parse_args()
 
 
@@ -32,10 +38,15 @@ def main():
     args = _parse_args()
     debug_mode = args.debug
 
-    # 強制讀取專案根目錄的 .env
-    # 假設 main.py 在 ppt_tool/main.py，根目錄就是上一層
-    project_root = Path(__file__).parent.parent
-    env_path = project_root / ".env"
+    # 讀取 .env：未指定時使用執行指令所在目錄
+    if args.env:
+        env_candidate = Path(args.env).expanduser()
+        env_path = env_candidate / ".env" if env_candidate.is_dir() else env_candidate
+    else:
+        env_path = Path.cwd() / ".env"
+
+    if not env_path.exists():
+        print(f"[WARN] .env not found at {env_path}. Continuing without overrides.")
     load_dotenv(dotenv_path=env_path)
     
     print("[INFO] PPT Secretary (Gemini Powered) Started")
