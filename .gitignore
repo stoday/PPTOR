@@ -1,0 +1,12 @@
+.env
+temp_visuals
+*.pptx
+*.key
+__pycache__
+*.log
+.venv
+.agent
+.pytest_cache
+.ipynb_checkpoints
+tests/__pycache__
+tests/artifacts
